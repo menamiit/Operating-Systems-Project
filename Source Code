@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <pthread.h>
 
-// Simulate task types
+// Simulate task type
 #define CPU_BOUND   1
 #define IO_BOUND    2
 #define REALTIME    3

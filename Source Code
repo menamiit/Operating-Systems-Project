@@ -3,74 +3,65 @@
 #include <unistd.h>
 #include <pthread.h>
 
-// Simulate task type
+// Task types
 #define CPU_BOUND   1
 #define IO_BOUND    2
 #define REALTIME    3
 #define BACKGROUND  4
 
-// Simulate CPU frequency levels
+// Simulated CPU frequency levels
 #define FREQ_HIGH  2000  // 2 GHz
 #define FREQ_MEDIUM 1000 // 1 GHz
 #define FREQ_LOW    500  // 0.5 GHz
 
 typedef struct {
     int task_id;
-    int task_type;  // CPU-bound, I/O-bound, real-time, etc.
-    int execution_time; // in milliseconds
-    int priority; // lower number = higher priority
+    int task_type;      // Type of task (CPU-bound, I/O-bound, etc.)
+    int execution_time; // Execution time in ms
+    int priority;       // Lower number = higher priority
 } Task;
 
-// Global variable to store CPU frequency
+// Current CPU frequency (global)
 int current_cpu_freq = FREQ_MEDIUM;
 
-// Function to change CPU frequency (simulated)
+// Simulated function to change CPU frequency
 void change_cpu_frequency(int new_freq) {
     current_cpu_freq = new_freq;
     printf("Changing CPU frequency to: %d MHz\n", current_cpu_freq / 1000);
 }
 
-// Function to simulate task execution (with energy consumption and time)
+// Simulated function to execute a task
 void execute_task(Task *task) {
-    printf("Executing Task %d with execution time %d ms at frequency %d MHz\n",
+    printf("Executing Task %d (Time: %d ms, Frequency: %d MHz)\n",
            task->task_id, task->execution_time, current_cpu_freq / 1000);
-    usleep(task->execution_time * 1000);  // Simulate task execution (in microseconds)
+    usleep(task->execution_time * 1000);  // Convert ms to microseconds
 }
 
-// Function to categorize task type and adjust frequency accordingly
+// Decide CPU frequency based on task type and priority, then execute
 void categorize_and_schedule_task(Task *task) {
     if (task->task_type == REALTIME) {
-        // Real-time tasks: Use high frequency for quick execution
+        // Real-time tasks need high speed
         change_cpu_frequency(FREQ_HIGH);
-        execute_task(task);
     } else if (task->task_type == CPU_BOUND) {
-        // CPU-bound tasks: Use medium or high frequency based on priority
-        if (task->priority <= 2) {
-            change_cpu_frequency(FREQ_HIGH);
-        } else {
-            change_cpu_frequency(FREQ_MEDIUM);
-        }
-        execute_task(task);
-    } else if (task->task_type == IO_BOUND) {
-        // I/O-bound tasks: Use low frequency to save energy
+        // High-priority CPU-bound tasks get high speed, others get medium
+        change_cpu_frequency(task->priority <= 2 ? FREQ_HIGH : FREQ_MEDIUM);
+    } else if (task->task_type == IO_BOUND || task->task_type == BACKGROUND) {
+        // I/O-bound and background tasks run at low speed to save power
         change_cpu_frequency(FREQ_LOW);
-        execute_task(task);
-    } else if (task->task_type == BACKGROUND) {
-        // Background tasks: Run at low frequency
-        change_cpu_frequency(FREQ_LOW);
-        execute_task(task);
     }
+    execute_task(task);
 }
 
-// Thread function for task execution
+// Thread function for running a task
 void* task_runner(void *arg) {
-    Task *task = (Task*)arg;
-    categorize_and_schedule_task(task);
+    categorize_and_schedule_task((Task*)arg);
     return NULL;
 }
 
 int main() {
     pthread_t threads[5];
+
+    // Define tasks
     Task tasks[5] = {
         {1, REALTIME, 100, 1},
         {2, CPU_BOUND, 500, 2},
@@ -82,12 +73,12 @@ int main() {
     // Create threads for each task
     for (int i = 0; i < 5; i++) {
         if (pthread_create(&threads[i], NULL, task_runner, (void*)&tasks[i])) {
-            fprintf(stderr, "Error creating thread for task %d\n", tasks[i].task_id);
+            fprintf(stderr, "Failed to create thread for Task %d\n", tasks[i].task_id);
             return 1;
         }
     }
 
-    // Wait for all threads to complete
+    // Wait for all threads to finish
     for (int i = 0; i < 5; i++) {
         pthread_join(threads[i], NULL);
     }

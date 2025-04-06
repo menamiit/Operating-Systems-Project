@@ -61,7 +61,7 @@ void* task_runner(void *arg) {
 int main() {
     pthread_t threads[5];
 
-    // Define tasks
+    // Defined tasks
     Task tasks[5] = {
         {1, REALTIME, 100, 1},
         {2, CPU_BOUND, 500, 2},
@@ -70,7 +70,7 @@ int main() {
         {5, CPU_BOUND, 700, 1}
     };
 
-    // Create threads for each task
+    // Created threads for each task
     for (int i = 0; i < 5; i++) {
         if (pthread_create(&threads[i], NULL, task_runner, (void*)&tasks[i])) {
             fprintf(stderr, "Failed to create thread for Task %d\n", tasks[i].task_id);
@@ -78,7 +78,7 @@ int main() {
         }
     }
 
-    // Wait for all threads to finish
+    // Wait now for all threads to finish
     for (int i = 0; i < 5; i++) {
         pthread_join(threads[i], NULL);
     }
